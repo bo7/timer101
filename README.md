@@ -74,14 +74,27 @@ See [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md) for complete schema documentation
 
 ```bash
 cd backend
-python -m venv venv
+# Create and activate virtual environment
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
 pip install -r requirements.txt
+
+# Seed test data (run once)
+python seed_data.py
+
+# Start the server
 uvicorn app.main:app --reload
 ```
 
 Backend runs on: http://localhost:8000
 API docs: http://localhost:8000/docs
+
+**Test credentials:**
+- Admin: username=`admin`, password=`admin123`
+- Employee 1: username=`max.mueller`, password=`password123`
+- Employee 2: username=`anna.schmidt`, password=`password123`
 
 ### Frontend Setup
 
