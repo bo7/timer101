@@ -121,6 +121,18 @@ class ApiClient {
     return response.json();
   }
 
+  async getWorktime(id: number): Promise<WorktimeEntry> {
+    const response = await fetch(`${API_BASE_URL}/api/worktimes/${id}`, {
+      headers: this.getAuthHeader(),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch worktime');
+    }
+
+    return response.json();
+  }
+
   async createWorktime(worktime: WorktimeEntry): Promise<WorktimeEntry> {
     const response = await fetch(`${API_BASE_URL}/api/worktimes`, {
       method: 'POST',

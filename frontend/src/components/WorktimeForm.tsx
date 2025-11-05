@@ -18,6 +18,7 @@ export default function WorktimeForm({ date, onSuccess, onCancel, initialData }:
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(!!initialData);
 
   const [formData, setFormData] = useState({
     location_id: initialData?.location_id || 0,
@@ -26,6 +27,31 @@ export default function WorktimeForm({ date, onSuccess, onCancel, initialData }:
     break_minutes: initialData?.break_minutes || 0,
     description: initialData?.description || '',
   });
+
+  // Load customer data for edit mode
+  useEffect(() => {
+    if (initialData?.customer_id) {
+      const loadCustomer = async () => {
+        try {
+          // Use the customer info from initialData if available
+          if (initialData.customer_name) {
+            setSelectedCustomer({
+              id: initialData.customer_id,
+              name: initialData.customer_name,
+              customer_number: '',
+            });
+          }
+        } catch (error) {
+          console.error('Failed to load customer:', error);
+        } finally {
+          setInitialLoading(false);
+        }
+      };
+      loadCustomer();
+    } else {
+      setInitialLoading(false);
+    }
+  }, [initialData]);
 
   // Load locations when customer is selected
   useEffect(() => {
@@ -123,6 +149,15 @@ export default function WorktimeForm({ date, onSuccess, onCancel, initialData }:
       router.push('/dashboard');
     }
   };
+
+  if (initialLoading) {
+    return (
+      <div className="text-center py-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Laden...</p>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">

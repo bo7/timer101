@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { api, type WorktimeEntry } from '@/lib/api';
 
-export default function ShowDayPage() {
+function ShowDayContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [worktimes, setWorktimes] = useState<WorktimeEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -16,8 +17,16 @@ export default function ShowDayPage() {
     const token = localStorage.getItem('token');
     if (!token) {
       router.push('/login');
+      return;
     }
-  }, [router]);
+
+    // Pre-fill date from query parameter
+    const dateParam = searchParams.get('date');
+    if (dateParam) {
+      setSelectedDate(dateParam);
+      fetchWorktimes(dateParam);
+    }
+  }, [router, searchParams]);
 
   const fetchWorktimes = async (date: string) => {
     setLoading(true);
@@ -218,5 +227,17 @@ export default function ShowDayPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function ShowDayPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <ShowDayContent />
+    </Suspense>
   );
 }
