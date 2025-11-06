@@ -1,25 +1,25 @@
 """
-Location schemas
+Baustelle schemas
 """
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional
 
 
-class LocationBase(BaseModel):
-    """Base location schema"""
+class BaustelleBase(BaseModel):
+    """Base baustelle schema"""
     customer_id: int
     name: str = Field(..., min_length=1, max_length=200)
     address: Optional[str] = None
 
 
-class LocationCreate(LocationBase):
-    """Location creation schema"""
+class BaustelleCreate(BaustelleBase):
+    """Baustelle creation schema"""
     active: bool = True
 
 
-class LocationResponse(LocationBase):
-    """Location response schema"""
+class BaustelleResponse(BaustelleBase):
+    """Baustelle response schema"""
     id: int
     active: bool
     created_at: datetime

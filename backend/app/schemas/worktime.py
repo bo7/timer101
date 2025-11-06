@@ -2,35 +2,25 @@
 Worktime schemas
 """
 from pydantic import BaseModel, Field, field_validator
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 
 
 class WorktimeBase(BaseModel):
     """Base worktime schema"""
     customer_id: int
-    location_id: int
-    description: Optional[str] = None
-    start_time: datetime
-    end_time: datetime
-    break_minutes: int = Field(default=0, ge=0)
+    baustelle_id: int
+    lv_entry_id: Optional[int] = None
+    date: date
+    worked_hours: int = Field(..., ge=1, le=8)
+    freitext_description: Optional[str] = None
 
-    @field_validator('end_time')
+    @field_validator('freitext_description')
     @classmethod
-    def end_after_start(cls, v, info):
-        """Validate that end_time is after start_time"""
-        if 'start_time' in info.data and v <= info.data['start_time']:
-            raise ValueError('end_time must be after start_time')
-        return v
-
-    @field_validator('break_minutes')
-    @classmethod
-    def break_not_too_long(cls, v, info):
-        """Validate that break is not longer than total time"""
-        if 'start_time' in info.data and 'end_time' in info.data:
-            total_minutes = (info.data['end_time'] - info.data['start_time']).total_seconds() / 60
-            if v >= total_minutes:
-                raise ValueError('break_minutes cannot be longer than or equal to total time')
+    def freitext_required_if_no_lv(cls, v, info):
+        """If no lv_entry_id, freitext must be provided"""
+        if info.data.get('lv_entry_id') is None and not v:
+            raise ValueError('freitext_description required when no lv_entry selected')
         return v
 
 
@@ -42,34 +32,26 @@ class WorktimeCreate(WorktimeBase):
 class WorktimeUpdate(BaseModel):
     """Worktime update schema - all fields optional"""
     customer_id: Optional[int] = None
-    location_id: Optional[int] = None
-    description: Optional[str] = None
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    break_minutes: Optional[int] = Field(default=None, ge=0)
-
-    @field_validator('end_time')
-    @classmethod
-    def end_after_start(cls, v, info):
-        """Validate that end_time is after start_time if both provided"""
-        if v is not None and 'start_time' in info.data and info.data['start_time'] is not None:
-            if v <= info.data['start_time']:
-                raise ValueError('end_time must be after start_time')
-        return v
+    baustelle_id: Optional[int] = None
+    lv_entry_id: Optional[int] = None
+    date: Optional[date] = None
+    worked_hours: Optional[int] = Field(None, ge=1, le=8)
+    freitext_description: Optional[str] = None
 
 
 class WorktimeResponse(WorktimeBase):
     """Worktime response schema"""
     id: int
     user_id: int
-    worked_minutes: int
     processed: bool
     created_at: datetime
     updated_at: datetime
 
     # Nested data
     customer_name: Optional[str] = None
-    location_name: Optional[str] = None
+    baustelle_name: Optional[str] = None
+    lv_position_number: Optional[str] = None
+    lv_description: Optional[str] = None
     username: Optional[str] = None
 
     class Config:

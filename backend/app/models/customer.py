@@ -19,7 +19,7 @@ class Customer(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     # Relationships
-    locations = relationship("Location", back_populates="customer", cascade="all, delete-orphan")
+    baustellen = relationship("Baustelle", back_populates="customer", cascade="all, delete-orphan")
     worktimes = relationship("Worktime", back_populates="customer")
 
     def __repr__(self):
