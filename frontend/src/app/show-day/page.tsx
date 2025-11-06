@@ -11,14 +11,6 @@ export default function ShowDayPage() {
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  useEffect(() => {
-    // Check authentication
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-    }
-  }, [router]);
-
   const fetchWorktimes = async (date: string) => {
     setLoading(true);
     try {
@@ -31,6 +23,23 @@ export default function ShowDayPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Check authentication
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+
+    // Check for date query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const dateParam = urlParams.get('date');
+    if (dateParam) {
+      setSelectedDate(dateParam);
+      fetchWorktimes(dateParam);
+    }
+  }, [router]);
 
   const handleDateChange = (date: string) => {
     setSelectedDate(date);

@@ -27,6 +27,28 @@ export default function WorktimeForm({ date, onSuccess, onCancel, initialData }:
     description: initialData?.description || '',
   });
 
+  // Load initial customer data when editing
+  useEffect(() => {
+    if (initialData?.customer_id) {
+      // Fetch customer data to pre-populate
+      const loadCustomer = async () => {
+        try {
+          // For editing, we can construct a minimal customer object from the data we have
+          if (initialData.customer_name) {
+            setSelectedCustomer({
+              id: initialData.customer_id,
+              name: initialData.customer_name,
+              customer_number: '', // We don't have this in WorktimeEntry
+            });
+          }
+        } catch (error) {
+          console.error('Failed to load customer:', error);
+        }
+      };
+      loadCustomer();
+    }
+  }, [initialData]);
+
   // Load locations when customer is selected
   useEffect(() => {
     if (selectedCustomer) {
