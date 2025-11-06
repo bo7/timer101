@@ -9,7 +9,6 @@ export default function ShowDayPage() {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [worktimes, setWorktimes] = useState<WorktimeEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
 
   const fetchWorktimes = async (date: string) => {
     setLoading(true);
@@ -48,10 +47,6 @@ export default function ShowDayPage() {
     }
   };
 
-  const handleEdit = (id: number) => {
-    setEditingId(id);
-  };
-
   const handleDelete = async (id: number) => {
     if (!confirm('Möchten Sie diesen Eintrag wirklich löschen?')) {
       return;
@@ -63,19 +58,6 @@ export default function ShowDayPage() {
     } catch (error: any) {
       alert(error.message || 'Fehler beim Löschen');
     }
-  };
-
-  const formatTime = (datetime: string) => {
-    return new Date(datetime).toLocaleTimeString('de-DE', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const formatDuration = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
   };
 
   return (
@@ -156,7 +138,7 @@ export default function ShowDayPage() {
                         <h3 className="font-semibold text-gray-900 text-lg">
                           {worktime.customer_name}
                         </h3>
-                        <p className="text-sm text-gray-600">{worktime.location_name}</p>
+                        <p className="text-sm text-gray-600">{worktime.baustelle_name}</p>
                       </div>
                       {worktime.processed && (
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -167,31 +149,26 @@ export default function ShowDayPage() {
 
                     <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
                       <div>
-                        <span className="text-gray-500">Zeit:</span>
-                        <span className="ml-2 font-medium">
-                          {formatTime(worktime.start_time)} - {formatTime(worktime.end_time)}
+                        <span className="text-gray-500">Arbeitsstunden:</span>
+                        <span className="ml-2 font-medium text-lg text-blue-600">
+                          {worktime.worked_hours}h
                         </span>
                       </div>
                       <div>
-                        <span className="text-gray-500">Gearbeitet:</span>
+                        <span className="text-gray-500">Position:</span>
                         <span className="ml-2 font-medium">
-                          {formatDuration(worktime.worked_minutes || 0)}
+                          {worktime.lv_position_number || 'Freitext'}
                         </span>
                       </div>
-                      {worktime.break_minutes > 0 && (
-                        <div>
-                          <span className="text-gray-500">Pause:</span>
-                          <span className="ml-2 font-medium">{worktime.break_minutes} Min</span>
-                        </div>
-                      )}
                     </div>
 
-                    {worktime.description && (
-                      <div className="mb-3 text-sm">
-                        <span className="text-gray-500">Tätigkeit:</span>
-                        <p className="mt-1 text-gray-700">{worktime.description}</p>
-                      </div>
-                    )}
+                    {/* Show LV description or Freitext description */}
+                    <div className="mb-3 text-sm">
+                      <span className="text-gray-500">Tätigkeit:</span>
+                      <p className="mt-1 text-gray-700">
+                        {worktime.freitext_description || worktime.lv_description || '-'}
+                      </p>
+                    </div>
 
                     {!worktime.processed && (
                       <div className="flex gap-2 pt-3 border-t border-gray-200">
@@ -217,7 +194,7 @@ export default function ShowDayPage() {
                   <div className="flex justify-between items-center text-lg font-semibold">
                     <span>Gesamt gearbeitet:</span>
                     <span className="text-blue-600">
-                      {formatDuration(worktimes.reduce((sum, wt) => sum + (wt.worked_minutes || 0), 0))}
+                      {worktimes.reduce((sum, wt) => sum + (wt.worked_hours || 0), 0)} Stunden
                     </span>
                   </div>
                 </div>
