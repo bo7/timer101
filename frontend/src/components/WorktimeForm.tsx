@@ -14,7 +14,11 @@ interface WorktimeFormProps {
 
 export default function WorktimeForm({ date, onSuccess, onCancel, initialData }: WorktimeFormProps) {
   const router = useRouter();
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    initialData?.customer_id && initialData?.customer_name
+      ? { id: initialData.customer_id, name: initialData.customer_name, customer_number: '' }
+      : null
+  );
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
