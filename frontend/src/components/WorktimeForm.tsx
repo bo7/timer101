@@ -20,32 +20,33 @@ export default function WorktimeForm({ date, onSuccess, onCancel, initialData }:
   const [hasChanges, setHasChanges] = useState(false);
 
   const [formData, setFormData] = useState({
-    location_id: initialData?.location_id || 0,
-    start_time: initialData?.start_time?.substring(11, 16) || '08:00',
-    end_time: initialData?.end_time?.substring(11, 16) || '17:00',
-    break_minutes: initialData?.break_minutes || 0,
-    description: initialData?.description || '',
+    location_id: 0,
+    start_time: '08:00',
+    end_time: '17:00',
+    break_minutes: 0,
+    description: '',
   });
 
-  // Load initial customer data when editing
+  // Load initial data when editing
   useEffect(() => {
-    if (initialData?.customer_id) {
-      // Fetch customer data to pre-populate
-      const loadCustomer = async () => {
-        try {
-          // For editing, we can construct a minimal customer object from the data we have
-          if (initialData.customer_name) {
-            setSelectedCustomer({
-              id: initialData.customer_id,
-              name: initialData.customer_name,
-              customer_number: '', // We don't have this in WorktimeEntry
-            });
-          }
-        } catch (error) {
-          console.error('Failed to load customer:', error);
-        }
-      };
-      loadCustomer();
+    if (initialData) {
+      // Update form data with initial values
+      setFormData({
+        location_id: initialData.location_id || 0,
+        start_time: initialData.start_time?.substring(11, 16) || '08:00',
+        end_time: initialData.end_time?.substring(11, 16) || '17:00',
+        break_minutes: initialData.break_minutes || 0,
+        description: initialData.description || '',
+      });
+
+      // Set customer data to pre-populate
+      if (initialData.customer_id && initialData.customer_name) {
+        setSelectedCustomer({
+          id: initialData.customer_id,
+          name: initialData.customer_name,
+          customer_number: '', // We don't have this in WorktimeEntry
+        });
+      }
     }
   }, [initialData]);
 
