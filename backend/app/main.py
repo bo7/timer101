@@ -11,7 +11,11 @@ from .routers import (
     baustellen_router,
     lv_router,
     worktimes_router,
-    admin_router
+    admin_router,
+    admin_users_router,
+    admin_rates_router,
+    admin_special_days_router,
+    admin_dashboard_router
 )
 
 # Create FastAPI app
@@ -39,6 +43,11 @@ app.include_router(baustellen_router)
 app.include_router(lv_router)
 app.include_router(worktimes_router)
 app.include_router(admin_router)
+# Admin interface routers
+app.include_router(admin_users_router)
+app.include_router(admin_rates_router)
+app.include_router(admin_special_days_router)
+app.include_router(admin_dashboard_router)
 
 
 @app.on_event("startup")

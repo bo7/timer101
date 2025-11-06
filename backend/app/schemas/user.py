@@ -16,12 +16,31 @@ class UserCreate(UserBase):
     """User creation schema"""
     password: str = Field(..., min_length=6)
     is_admin: bool = False
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    employee_type: Optional[str] = None  # "Geselle", "Meister", "Polier"
+
+
+class UserUpdate(BaseModel):
+    """User update schema (all fields optional)"""
+    username: Optional[str] = Field(None, min_length=3, max_length=50)
+    email: Optional[EmailStr] = None
+    password: Optional[str] = Field(None, min_length=6)
+    is_admin: Optional[bool] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    employee_type: Optional[str] = None
 
 
 class UserResponse(UserBase):
     """User response schema"""
     id: int
     is_admin: bool
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    employee_type: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[int] = None
     created_at: datetime
 
     class Config:
