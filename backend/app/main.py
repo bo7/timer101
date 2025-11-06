@@ -8,7 +8,8 @@ from .core.database import init_db
 from .routers import (
     auth_router,
     customers_router,
-    locations_router,
+    baustellen_router,
+    lv_router,
     worktimes_router,
     admin_router
 )
@@ -34,7 +35,8 @@ app.add_middleware(
 # Include routers
 app.include_router(auth_router)
 app.include_router(customers_router)
-app.include_router(locations_router)
+app.include_router(baustellen_router)
+app.include_router(lv_router)
 app.include_router(worktimes_router)
 app.include_router(admin_router)
 

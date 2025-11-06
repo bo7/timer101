@@ -4,23 +4,18 @@ Worktimes router
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import date, datetime, time
+from datetime import date
 
 from ..core.database import get_db
 from ..core.security import get_current_active_user
 from ..models.user import User
 from ..models.worktime import Worktime
 from ..models.customer import Customer
-from ..models.location import Location
+from ..models.baustelle import Baustelle
+from ..models.leistungsverzeichnis import LeistungsverzeichnisEntry
 from ..schemas.worktime import WorktimeCreate, WorktimeUpdate, WorktimeResponse
 
 router = APIRouter(prefix="/api/worktimes", tags=["worktimes"])
-
-
-def calculate_worked_minutes(start_time: datetime, end_time: datetime, break_minutes: int) -> int:
-    """Calculate worked minutes from start, end, and break"""
-    total_minutes = int((end_time - start_time).total_seconds() / 60)
-    return total_minutes - break_minutes
 
 
 @router.get("", response_model=List[WorktimeResponse])
@@ -38,14 +33,9 @@ def get_worktimes(
 
     # Filter by date if provided
     if date_filter:
-        start_of_day = datetime.combine(date_filter, time.min)
-        end_of_day = datetime.combine(date_filter, time.max)
-        query = query.filter(
-            Worktime.start_time >= start_of_day,
-            Worktime.start_time <= end_of_day
-        )
+        query = query.filter(Worktime.date == date_filter)
 
-    worktimes = query.order_by(Worktime.start_time.desc()).offset(skip).limit(limit).all()
+    worktimes = query.order_by(Worktime.date.desc(), Worktime.created_at.desc()).offset(skip).limit(limit).all()
 
     # Enrich with related data
     result = []
@@ -54,17 +44,18 @@ def get_worktimes(
             "id": wt.id,
             "user_id": wt.user_id,
             "customer_id": wt.customer_id,
-            "location_id": wt.location_id,
-            "description": wt.description,
-            "start_time": wt.start_time,
-            "end_time": wt.end_time,
-            "break_minutes": wt.break_minutes,
-            "worked_minutes": wt.worked_minutes,
+            "baustelle_id": wt.baustelle_id,
+            "lv_entry_id": wt.lv_entry_id,
+            "date": wt.date,
+            "worked_hours": wt.worked_hours,
+            "freitext_description": wt.freitext_description,
             "processed": wt.processed,
             "created_at": wt.created_at,
             "updated_at": wt.updated_at,
             "customer_name": wt.customer.name if wt.customer else None,
-            "location_name": wt.location.name if wt.location else None,
+            "baustelle_name": wt.baustelle.name if wt.baustelle else None,
+            "lv_position_number": wt.lv_entry.position_number if wt.lv_entry else None,
+            "lv_description": wt.lv_entry.description if wt.lv_entry else None,
             "username": wt.user.username if wt.user else None
         }
         result.append(WorktimeResponse(**wt_dict))
@@ -96,7 +87,9 @@ def get_worktime(
     wt_dict = {
         **worktime.__dict__,
         "customer_name": worktime.customer.name if worktime.customer else None,
-        "location_name": worktime.location.name if worktime.location else None,
+        "baustelle_name": worktime.baustelle.name if worktime.baustelle else None,
+        "lv_position_number": worktime.lv_entry.position_number if worktime.lv_entry else None,
+        "lv_description": worktime.lv_entry.description if worktime.lv_entry else None,
         "username": worktime.user.username if worktime.user else None
     }
 
@@ -120,36 +113,44 @@ def create_worktime(
             detail="Customer not found"
         )
 
-    # Verify location exists and belongs to customer
-    location = db.query(Location).filter(Location.id == worktime.location_id).first()
-    if not location:
+    # Verify baustelle exists and belongs to customer
+    baustelle = db.query(Baustelle).filter(Baustelle.id == worktime.baustelle_id).first()
+    if not baustelle:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Location not found"
+            detail="Baustelle not found"
         )
-    if location.customer_id != worktime.customer_id:
+    if baustelle.customer_id != worktime.customer_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Location does not belong to the selected customer"
+            detail="Baustelle does not belong to the selected customer"
         )
 
-    # Calculate worked minutes
-    worked_minutes = calculate_worked_minutes(
-        worktime.start_time,
-        worktime.end_time,
-        worktime.break_minutes
-    )
+    # Verify LV entry if provided
+    if worktime.lv_entry_id:
+        lv_entry = db.query(LeistungsverzeichnisEntry).filter(
+            LeistungsverzeichnisEntry.id == worktime.lv_entry_id
+        ).first()
+        if not lv_entry:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="LV entry not found"
+            )
+        if lv_entry.baustelle_id != worktime.baustelle_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="LV entry does not belong to the selected baustelle"
+            )
 
     # Create worktime entry
     db_worktime = Worktime(
         user_id=current_user.id,
         customer_id=worktime.customer_id,
-        location_id=worktime.location_id,
-        description=worktime.description,
-        start_time=worktime.start_time,
-        end_time=worktime.end_time,
-        break_minutes=worktime.break_minutes,
-        worked_minutes=worked_minutes,
+        baustelle_id=worktime.baustelle_id,
+        lv_entry_id=worktime.lv_entry_id,
+        date=worktime.date,
+        worked_hours=worktime.worked_hours,
+        freitext_description=worktime.freitext_description,
         processed=False
     )
 
@@ -161,7 +162,9 @@ def create_worktime(
     wt_dict = {
         **db_worktime.__dict__,
         "customer_name": db_worktime.customer.name,
-        "location_name": db_worktime.location.name,
+        "baustelle_name": db_worktime.baustelle.name,
+        "lv_position_number": db_worktime.lv_entry.position_number if db_worktime.lv_entry else None,
+        "lv_description": db_worktime.lv_entry.description if db_worktime.lv_entry else None,
         "username": db_worktime.user.username
     }
 
@@ -200,16 +203,33 @@ def update_worktime(
     # Update fields
     update_data = worktime_update.model_dump(exclude_unset=True)
 
+    # Verify baustelle if being updated
+    if 'baustelle_id' in update_data:
+        baustelle = db.query(Baustelle).filter(Baustelle.id == update_data['baustelle_id']).first()
+        if not baustelle:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Baustelle not found"
+            )
+        if 'customer_id' in update_data and baustelle.customer_id != update_data['customer_id']:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Baustelle does not belong to the selected customer"
+            )
+
+    # Verify LV entry if being updated
+    if 'lv_entry_id' in update_data and update_data['lv_entry_id'] is not None:
+        lv_entry = db.query(LeistungsverzeichnisEntry).filter(
+            LeistungsverzeichnisEntry.id == update_data['lv_entry_id']
+        ).first()
+        if not lv_entry:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="LV entry not found"
+            )
+
     for field, value in update_data.items():
         setattr(db_worktime, field, value)
-
-    # Recalculate worked minutes if time fields changed
-    if any(field in update_data for field in ['start_time', 'end_time', 'break_minutes']):
-        db_worktime.worked_minutes = calculate_worked_minutes(
-            db_worktime.start_time,
-            db_worktime.end_time,
-            db_worktime.break_minutes
-        )
 
     db.commit()
     db.refresh(db_worktime)
@@ -218,7 +238,9 @@ def update_worktime(
     wt_dict = {
         **db_worktime.__dict__,
         "customer_name": db_worktime.customer.name,
-        "location_name": db_worktime.location.name,
+        "baustelle_name": db_worktime.baustelle.name,
+        "lv_position_number": db_worktime.lv_entry.position_number if db_worktime.lv_entry else None,
+        "lv_description": db_worktime.lv_entry.description if db_worktime.lv_entry else None,
         "username": db_worktime.user.username
     }
 

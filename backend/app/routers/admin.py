@@ -54,7 +54,9 @@ def process_worktime(
     wt_dict = {
         **worktime.__dict__,
         "customer_name": worktime.customer.name if worktime.customer else None,
-        "location_name": worktime.location.name if worktime.location else None,
+        "baustelle_name": worktime.baustelle.name if worktime.baustelle else None,
+        "lv_position_number": worktime.lv_entry.position_number if worktime.lv_entry else None,
+        "lv_description": worktime.lv_entry.description if worktime.lv_entry else None,
         "username": worktime.user.username if worktime.user else None
     }
 
@@ -86,7 +88,9 @@ def unprocess_worktime(
     wt_dict = {
         **worktime.__dict__,
         "customer_name": worktime.customer.name if worktime.customer else None,
-        "location_name": worktime.location.name if worktime.location else None,
+        "baustelle_name": worktime.baustelle.name if worktime.baustelle else None,
+        "lv_position_number": worktime.lv_entry.position_number if worktime.lv_entry else None,
+        "lv_description": worktime.lv_entry.description if worktime.lv_entry else None,
         "username": worktime.user.username if worktime.user else None
     }
 
