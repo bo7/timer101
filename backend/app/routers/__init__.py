@@ -11,6 +11,7 @@ from .admin_users import router as admin_users_router
 from .admin_rates import router as admin_rates_router
 from .admin_special_days import router as admin_special_days_router
 from .admin_dashboard import router as admin_dashboard_router
+from .uploads import router as uploads_router
 
 __all__ = [
     "auth_router",
@@ -22,5 +23,6 @@ __all__ = [
     "admin_users_router",
     "admin_rates_router",
     "admin_special_days_router",
-    "admin_dashboard_router"
+    "admin_dashboard_router",
+    "uploads_router"
 ]

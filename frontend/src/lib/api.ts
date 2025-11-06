@@ -39,6 +39,9 @@ interface WorktimeEntry {
   date: string; // YYYY-MM-DD
   worked_hours: number; // 1-8
   freitext_description?: string | null;
+  is_regie?: boolean;
+  materials_used?: string | null;
+  picture_path?: string | null;
   processed?: boolean;
   customer_name?: string;
   baustelle_name?: string;
@@ -204,6 +207,21 @@ class ApiClient {
       const error = await response.json();
       throw new Error(error.detail || 'Failed to delete worktime');
     }
+  }
+
+  async uploadPicture(formData: FormData): Promise<{ filename: string; size: number; content_type: string }> {
+    const response = await fetch(`${API_BASE_URL}/api/uploads/picture`, {
+      method: 'POST',
+      headers: this.getAuthHeader(),
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to upload picture');
+    }
+
+    return response.json();
   }
 }
 

@@ -14,6 +14,9 @@ class WorktimeBase(BaseModel):
     date: date
     worked_hours: int = Field(..., ge=1, le=8)
     freitext_description: Optional[str] = None
+    is_regie: bool = False
+    materials_used: Optional[str] = None
+    picture_path: Optional[str] = None
 
     @field_validator('freitext_description')
     @classmethod
@@ -37,6 +40,9 @@ class WorktimeUpdate(BaseModel):
     date: Optional[date] = None
     worked_hours: Optional[int] = Field(None, ge=1, le=8)
     freitext_description: Optional[str] = None
+    is_regie: Optional[bool] = None
+    materials_used: Optional[str] = None
+    picture_path: Optional[str] = None
 
 
 class WorktimeResponse(WorktimeBase):
