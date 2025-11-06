@@ -23,6 +23,7 @@ class Baustelle(Base):
     customer = relationship("Customer", back_populates="baustellen")
     worktimes = relationship("Worktime", back_populates="baustelle")
     lv_entries = relationship("LeistungsverzeichnisEntry", back_populates="baustelle", cascade="all, delete-orphan")
+    rates = relationship("BaustelleRate", back_populates="baustelle", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Baustelle(id={self.id}, name='{self.name}', customer_id={self.customer_id})>"
