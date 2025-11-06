@@ -1,10 +1,10 @@
 """
-Seed database with initial test data
+Seed database with initial test data for new simplified schema
 """
 from app.core.database import SessionLocal, init_db
 from app.core.security import get_password_hash
-from app.models import User, Customer, Location, Worktime
-from datetime import datetime, timedelta
+from app.models import User, Customer, Baustelle, LeistungsverzeichnisEntry, Worktime
+from datetime import date
 
 
 def seed_database():
@@ -34,14 +34,8 @@ def seed_database():
             password_hash=get_password_hash("password123"),
             is_admin=False
         )
-        employee2 = User(
-            username="anna.schmidt",
-            email="anna.schmidt@example.com",
-            password_hash=get_password_hash("password123"),
-            is_admin=False
-        )
 
-        db.add_all([admin_user, employee1, employee2])
+        db.add_all([admin_user, employee1])
         db.commit()
 
         print("Creating customers...")
@@ -56,100 +50,134 @@ def seed_database():
             customer_number="C002",
             active=True
         )
-        customer3 = Customer(
-            name="Bauer AG",
-            customer_number="C003",
-            active=True
-        )
-        customer4 = Customer(
-            name="Weber Industries",
-            customer_number="C004",
-            active=True
-        )
 
-        db.add_all([customer1, customer2, customer3, customer4])
+        db.add_all([customer1, customer2])
         db.commit()
 
-        print("Creating locations...")
-        # Create locations
-        locations = [
-            Location(customer_id=customer1.id, name="Hauptsitz München", address="Hauptstraße 1, 80331 München", active=True),
-            Location(customer_id=customer1.id, name="Filiale Berlin", address="Berliner Allee 50, 10117 Berlin", active=True),
-            Location(customer_id=customer2.id, name="Büro Frankfurt", address="Mainzer Landstraße 100, 60327 Frankfurt", active=True),
-            Location(customer_id=customer2.id, name="Lager Hamburg", address="Hafenstraße 20, 20459 Hamburg", active=True),
-            Location(customer_id=customer3.id, name="Werk Stuttgart", address="Industriestraße 10, 70565 Stuttgart", active=True),
-            Location(customer_id=customer3.id, name="Zentrale Köln", address="Domstraße 5, 50667 Köln", active=True),
-            Location(customer_id=customer4.id, name="Büro Düsseldorf", address="Königsallee 60, 40212 Düsseldorf", active=True),
+        print("Creating baustellen (construction sites)...")
+        # Create baustellen
+        baustellen = [
+            Baustelle(customer_id=customer1.id, name="Baustelle Hauptstraße", address="Hauptstraße 1, 80331 München", active=True),
+            Baustelle(customer_id=customer1.id, name="Baustelle Berliner Allee", address="Berliner Allee 50, 10117 Berlin", active=True),
+            Baustelle(customer_id=customer2.id, name="Baustelle Frankfurt Main", address="Mainzer Landstraße 100, 60327 Frankfurt", active=True),
         ]
 
-        db.add_all(locations)
+        db.add_all(baustellen)
         db.commit()
 
-        print("Creating worktime entries...")
-        # Create sample worktime entries for the last few days
-        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        print("Creating Leistungsverzeichnis entries...")
+        # Create LV entries for each baustelle
+        lv_entries = []
+
+        # Baustelle 1 LV entries
+        lv_entries.extend([
+            LeistungsverzeichnisEntry(
+                baustelle_id=baustellen[0].id,
+                position_number=None,
+                description="Freitext",
+                is_freitext=True,
+                active=True
+            ),
+            LeistungsverzeichnisEntry(
+                baustelle_id=baustellen[0].id,
+                position_number="1.1",
+                description="Erdarbeiten",
+                unit="m³",
+                is_freitext=False,
+                active=True
+            ),
+            LeistungsverzeichnisEntry(
+                baustelle_id=baustellen[0].id,
+                position_number="2.1",
+                description="Betonarbeiten",
+                unit="m³",
+                is_freitext=False,
+                active=True
+            ),
+            LeistungsverzeichnisEntry(
+                baustelle_id=baustellen[0].id,
+                position_number="3.1",
+                description="Maurerarbeiten",
+                unit="m²",
+                is_freitext=False,
+                active=True
+            ),
+        ])
+
+        # Baustelle 2 LV entries
+        lv_entries.extend([
+            LeistungsverzeichnisEntry(
+                baustelle_id=baustellen[1].id,
+                position_number=None,
+                description="Freitext",
+                is_freitext=True,
+                active=True
+            ),
+            LeistungsverzeichnisEntry(
+                baustelle_id=baustellen[1].id,
+                position_number="1.1",
+                description="Aushubarbeiten",
+                unit="m³",
+                is_freitext=False,
+                active=True
+            ),
+            LeistungsverzeichnisEntry(
+                baustelle_id=baustellen[1].id,
+                position_number="2.1",
+                description="Fundamentarbeiten",
+                unit="m²",
+                is_freitext=False,
+                active=True
+            ),
+        ])
+
+        # Baustelle 3 LV entries
+        lv_entries.extend([
+            LeistungsverzeichnisEntry(
+                baustelle_id=baustellen[2].id,
+                position_number=None,
+                description="Freitext",
+                is_freitext=True,
+                active=True
+            ),
+            LeistungsverzeichnisEntry(
+                baustelle_id=baustellen[2].id,
+                position_number="1.1",
+                description="Abbrucharbeiten",
+                unit="Std",
+                is_freitext=False,
+                active=True
+            ),
+        ])
+
+        db.add_all(lv_entries)
+        db.commit()
+
+        print("Creating worktime entries (new schema)...")
+        # Create sample worktime entries with new schema
+        today = date.today()
 
         worktimes = [
-            # Today - employee1
+            # Regular LV entry worktime
             Worktime(
                 user_id=employee1.id,
                 customer_id=customer1.id,
-                location_id=locations[0].id,
-                description="Installation der neuen Software",
-                start_time=today.replace(hour=8, minute=0),
-                end_time=today.replace(hour=12, minute=0),
-                break_minutes=0,
-                worked_minutes=240,
+                baustelle_id=baustellen[0].id,
+                lv_entry_id=lv_entries[1].id,  # Erdarbeiten
+                date=today,
+                worked_hours=8,
+                freitext_description=None,
                 processed=False
             ),
-            Worktime(
-                user_id=employee1.id,
-                customer_id=customer2.id,
-                location_id=locations[2].id,
-                description="Wartungsarbeiten",
-                start_time=today.replace(hour=13, minute=0),
-                end_time=today.replace(hour=17, minute=30),
-                break_minutes=30,
-                worked_minutes=240,
-                processed=False
-            ),
-
-            # Yesterday - employee1
-            Worktime(
-                user_id=employee1.id,
-                customer_id=customer3.id,
-                location_id=locations[4].id,
-                description="Netzwerk-Setup",
-                start_time=(today - timedelta(days=1)).replace(hour=9, minute=0),
-                end_time=(today - timedelta(days=1)).replace(hour=17, minute=0),
-                break_minutes=60,
-                worked_minutes=420,
-                processed=True
-            ),
-
-            # 2 days ago - employee1
+            # Freitext worktime
             Worktime(
                 user_id=employee1.id,
                 customer_id=customer1.id,
-                location_id=locations[1].id,
-                description="Server Migration",
-                start_time=(today - timedelta(days=2)).replace(hour=8, minute=30),
-                end_time=(today - timedelta(days=2)).replace(hour=16, minute=30),
-                break_minutes=45,
-                worked_minutes=435,
-                processed=True
-            ),
-
-            # Today - employee2
-            Worktime(
-                user_id=employee2.id,
-                customer_id=customer4.id,
-                location_id=locations[6].id,
-                description="Schulung der Mitarbeiter",
-                start_time=today.replace(hour=9, minute=0),
-                end_time=today.replace(hour=15, minute=0),
-                break_minutes=45,
-                worked_minutes=315,
+                baustelle_id=baustellen[1].id,
+                lv_entry_id=None,
+                date=today,
+                worked_hours=4,
+                freitext_description="Sonstige Arbeiten - Reinigung und Vorbereitung",
                 processed=False
             ),
         ]
@@ -160,11 +188,16 @@ def seed_database():
         print("✓ Database seeded successfully!")
         print("\nTest credentials:")
         print("  Admin: username='admin', password='admin123'")
-        print("  Employee 1: username='max.mueller', password='password123'")
-        print("  Employee 2: username='anna.schmidt', password='password123'")
+        print("  Employee: username='max.mueller', password='password123'")
+        print("\nData created:")
+        print(f"  - {len(baustellen)} Baustellen")
+        print(f"  - {len(lv_entries)} Leistungsverzeichnis entries")
+        print(f"  - {len(worktimes)} Worktime entries (new schema with hours)")
 
     except Exception as e:
         print(f"Error seeding database: {e}")
+        import traceback
+        traceback.print_exc()
         db.rollback()
     finally:
         db.close()
