@@ -15,25 +15,35 @@ interface Customer {
   customer_number: string;
 }
 
-interface Location {
+interface Baustelle {
   id: number;
   customer_id: number;
   name: string;
   address?: string;
 }
 
+interface LVEntry {
+  id: number;
+  baustelle_id: number;
+  position_number?: string;
+  description: string;
+  unit?: string;
+  is_freitext: boolean;
+}
+
 interface WorktimeEntry {
   id?: number;
   customer_id: number;
-  location_id: number;
-  description?: string;
-  start_time: string;
-  end_time: string;
-  break_minutes: number;
-  worked_minutes?: number;
+  baustelle_id: number;
+  lv_entry_id?: number | null;
+  date: string; // YYYY-MM-DD
+  worked_hours: number; // 1-8
+  freitext_description?: string | null;
   processed?: boolean;
   customer_name?: string;
-  location_name?: string;
+  baustelle_name?: string;
+  lv_position_number?: string;
+  lv_description?: string;
 }
 
 class ApiClient {
@@ -90,16 +100,31 @@ class ApiClient {
     return response.json();
   }
 
-  async getLocations(customerId: number): Promise<Location[]> {
+  async getBaustellen(customerId: number): Promise<Baustelle[]> {
     const response = await fetch(
-      `${API_BASE_URL}/api/locations?customer_id=${customerId}`,
+      `${API_BASE_URL}/api/baustellen?customer_id=${customerId}`,
       {
         headers: this.getAuthHeader(),
       }
     );
 
     if (!response.ok) {
-      throw new Error('Failed to fetch locations');
+      throw new Error('Failed to fetch baustellen');
+    }
+
+    return response.json();
+  }
+
+  async searchLVEntries(baustelleId: number, query: string = ''): Promise<LVEntry[]> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/lv/search?baustelle_id=${baustelleId}&q=${encodeURIComponent(query)}`,
+      {
+        headers: this.getAuthHeader(),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to search LV entries');
     }
 
     return response.json();
@@ -183,4 +208,4 @@ class ApiClient {
 }
 
 export const api = new ApiClient();
-export type { Customer, Location, WorktimeEntry };
+export type { Customer, Baustelle, LVEntry, WorktimeEntry };

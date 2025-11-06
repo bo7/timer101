@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import WorktimeForm from '@/components/WorktimeForm';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 export default function AddTodayPage() {
   const router = useRouter();
   const [entries, setEntries] = useState<number[]>([1]);
+  const [showConfirm, setShowConfirm] = useState(false);
   const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
@@ -18,16 +20,19 @@ export default function AddTodayPage() {
   }, [router]);
 
   const handleSuccess = () => {
-    // Ask user if they want to add another entry
-    const addAnother = window.confirm('Eintrag gespeichert!\n\nMöchten Sie einen weiteren Eintrag hinzufügen?');
+    setShowConfirm(true);
+  };
 
-    if (addAnother) {
-      // Reset to show a single new empty form
-      setEntries([entries.length + 1]);
-    } else {
-      // Redirect to dashboard
-      router.push('/dashboard');
-    }
+  const handleConfirmYes = () => {
+    // Reset to show a single new empty form
+    setEntries([entries.length + 1]);
+    setShowConfirm(false);
+  };
+
+  const handleConfirmNo = () => {
+    // Redirect to dashboard
+    setShowConfirm(false);
+    router.push('/dashboard');
   };
 
   const addAnotherEntry = () => {
@@ -95,6 +100,17 @@ export default function AddTodayPage() {
           </button>
         </div>
       </main>
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showConfirm}
+        title="Eintrag gespeichert!"
+        message="Möchten Sie einen weiteren Eintrag hinzufügen?"
+        confirmText="Ja"
+        cancelText="Nein"
+        onConfirm={handleConfirmYes}
+        onCancel={handleConfirmNo}
+      />
     </div>
   );
 }
