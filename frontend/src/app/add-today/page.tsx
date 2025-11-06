@@ -18,7 +18,16 @@ export default function AddTodayPage() {
   }, [router]);
 
   const handleSuccess = () => {
-    router.push('/dashboard');
+    // Ask user if they want to add another entry
+    const addAnother = window.confirm('Eintrag gespeichert!\n\nMöchten Sie einen weiteren Eintrag hinzufügen?');
+
+    if (addAnother) {
+      // Reset to show a single new empty form
+      setEntries([entries.length + 1]);
+    } else {
+      // Redirect to dashboard
+      router.push('/dashboard');
+    }
   };
 
   const addAnotherEntry = () => {
