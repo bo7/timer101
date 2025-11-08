@@ -30,6 +30,7 @@ class UserUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     employee_type: Optional[str] = None
+    time_entry_mode: Optional[str] = Field(None, pattern="^(hours|times)$")
 
 
 class UserResponse(UserBase):
@@ -39,6 +40,7 @@ class UserResponse(UserBase):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     employee_type: Optional[str] = None
+    time_entry_mode: str = "hours"  # "hours" or "times"
     deleted_at: Optional[datetime] = None
     deleted_by: Optional[int] = None
     created_at: datetime

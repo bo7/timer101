@@ -1,7 +1,7 @@
 """
 Worktime model
 """
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Date, ForeignKey, Text, CheckConstraint
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Date, ForeignKey, Text, CheckConstraint, Time
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from ..core.database import Base
@@ -19,7 +19,15 @@ class Worktime(Base):
     lv_entry_id = Column(Integer, ForeignKey("leistungsverzeichnis_entries.id", ondelete="RESTRICT"), nullable=True, index=True)
 
     date = Column(Date, nullable=False, index=True)  # Work date
-    worked_hours = Column(Integer, nullable=False)  # 1-8 hours
+
+    # Hours mode (simple)
+    worked_hours = Column(Integer, nullable=True)  # 1-8 hours (nullable for times mode)
+
+    # Times mode (detailed)
+    start_time = Column(Time, nullable=True)  # Start time
+    end_time = Column(Time, nullable=True)  # End time
+    break_minutes = Column(Integer, nullable=True, default=0)  # Break in minutes
+
     freitext_description = Column(Text)  # Only used when lv_entry is "Freitext"
 
     # Regie fields
@@ -37,10 +45,7 @@ class Worktime(Base):
     baustelle = relationship("Baustelle", back_populates="worktimes")
     lv_entry = relationship("LeistungsverzeichnisEntry", back_populates="worktimes")
 
-    # Check constraints
-    __table_args__ = (
-        CheckConstraint('worked_hours >= 1 AND worked_hours <= 8', name='check_hours_range'),
-    )
+    # No table constraints needed - validation done at application level
 
     def __repr__(self):
         return f"<Worktime(id={self.id}, user_id={self.user_id}, date={self.date}, hours={self.worked_hours})>"

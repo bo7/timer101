@@ -14,7 +14,7 @@ from ..core.security import (
 )
 from ..core.config import settings
 from ..models.user import User
-from ..schemas.user import UserLogin, Token, UserResponse, UserCreate
+from ..schemas.user import UserLogin, Token, UserResponse, UserCreate, UserUpdate
 
 router = APIRouter(prefix="/api/auth", tags=["authentication"])
 
@@ -86,4 +86,25 @@ async def get_current_user_info(current_user: User = Depends(get_current_active_
     """
     Get current user information
     """
+    return current_user
+
+
+@router.put("/me/preferences", response_model=UserResponse)
+async def update_user_preferences(
+    preferences: UserUpdate,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Update current user's preferences (time_entry_mode, etc.)
+    """
+    # Update time_entry_mode if provided
+    if preferences.time_entry_mode is not None:
+        current_user.time_entry_mode = preferences.time_entry_mode
+
+    # Can extend to update other preferences in the future
+
+    db.commit()
+    db.refresh(current_user)
+
     return current_user

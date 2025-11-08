@@ -23,6 +23,9 @@ class User(Base):
     last_name = Column(String(100), nullable=True)
     employee_type = Column(String(20), nullable=True)  # "Geselle", "Meister", "Polier"
 
+    # User preferences
+    time_entry_mode = Column(String(10), default="hours", nullable=False)  # "hours" or "times"
+
     # Soft delete support
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     deleted_by = Column(Integer, ForeignKey("users.id"), nullable=True)
